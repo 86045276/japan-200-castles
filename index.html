@@ -25,7 +25,20 @@
   .meta{color:var(--muted);font-size:0.8rem;margin-bottom:6px;}
   .stamp-item,.event-item{background:#e8f0fe;border-radius:6px;padding:8px 10px;margin:4px 0;font-size:0.85rem;}
   .event-item{background:#fff4e6;}
-  .nav-btn,.link-btn{display:inline-block;margin-top:4px;margin-right:6px;padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:16px;font-size:0.75rem;text-decoration:none;}
+  .nav-btn,.link-btn,.been-btn{display:inline-block;margin-top:4px;margin-right:6px;padding:4px 10px;background:var(--accent);color:white;border:none;border-radius:16px;font-size:0.75rem;text-decoration:none;cursor:pointer;}
+  .been-btn{margin-top:0;background:#fff;color:var(--muted);border:1px solid var(--border);}
+  .been-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .card-top{display:flex;align-items:flex-start;gap:8px;}
+  .card-top h3{flex:1;}
+  .set-wrap{position:relative;flex:0 0 auto;}
+  #settingsBtn{height:100%;padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:0.85rem;cursor:pointer;}
+  #settingsBtn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  #settingsPanel{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:20;width:280px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:12px;}
+  #settingsPanel.open{display:block;}
+  #settingsPanel label{display:flex;gap:8px;padding:8px 2px;font-size:0.85rem;cursor:pointer;}
+  #settingsPanel .hint{display:block;color:var(--muted);font-size:0.75rem;font-weight:400;}
+  .set-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:4px;padding-top:8px;font-size:0.75rem;color:var(--muted);}
+  .set-foot button{border:0;background:none;color:var(--accent);cursor:pointer;font-size:0.75rem;}
   .link-btn{background:#d97706;}
   #map{flex:1;height:100%;}
   .notice{font-size:0.75rem;color:var(--muted);padding:8px 16px;background:#fff8e1;border-top:1px solid var(--border);}
@@ -41,10 +54,22 @@
     <div class="filters">
       <select id="region"><option value="">全部区域</option><option value="北海道">北海道</option><option value="東北">东北</option><option value="関東">关东</option><option value="甲信越">甲信越</option><option value="北陸">北陆</option><option value="東海">东海</option><option value="近畿">近畿</option><option value="中国">中国</option><option value="四国">四国</option><option value="九州">九州</option><option value="沖縄">冲绳</option></select>
       <select id="type"><option value="">全部</option><option value="100">日本100名城</option><option value="続">続100名城</option></select>
+      <div class="set-wrap" id="setWrap">
+        <button type="button" id="settingsBtn">设置</button>
+        <div id="settingsPanel">
+          <div style="font-weight:500;font-size:0.9rem;">显示设置</div>
+          <div class="hint" style="margin:4px 0 6px;">只记在这台设备上，用来把暂时不用看的藏起来。</div>
+          <label><input type="checkbox" id="hideUnchecked"><span>隐藏未核对的城<span class="hint">盖章地点仍是「待核对」的，列表和地图都不显示</span></span></label>
+          <label><input type="checkbox" id="eventsOnly"><span>只看有活动的城<span class="hint">没有近期活动的先藏起来</span></span></label>
+          <label><input type="checkbox" id="hideVisited"><span>隐藏已去过的城<span class="hint">卡片上点「去过」后，可以从行程里拿掉</span></span></label>
+          <label><input type="checkbox" id="compact"><span>卡片里不显示占位信息<span class="hint">「待核对」「请确认」不再占位置</span></span></label>
+          <div class="set-foot"><span id="visitedCount">已去过 0 座</span><button type="button" id="resetPrefs">全部恢复</button></div>
+        </div>
+      </div>
     </div>
   </div>
   <div id="list"></div>
-  <div class="notice">营业/盖章/活动会变动，出发前请确认官方。点击「导航」可打开 Google Maps。</div>
+  <div class="notice" id="countline">营业/盖章/活动会变动，出发前请确认官方。点击「导航」可打开 Google Maps。</div>
 </div>
 <div id="map"></div>
 
@@ -200,30 +225,78 @@ styleCtl.onAdd = function() {
 styleCtl.addTo(map);
 
 const markers = {};
-castles.forEach(c => {
-  if(c.lat && c.lng){
+const PREFS_KEY = "castle-display-v1";
+const VISITED_KEY = "castle-visited-v1";
+const prefs = { hideUnchecked:false, eventsOnly:false, hideVisited:false, compact:false };
+let visited = new Set();
+
+function loadStore(){
+  try{
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
+    if(p) Object.assign(prefs, p);
+    const v = JSON.parse(localStorage.getItem(VISITED_KEY) || "[]");
+    if(Array.isArray(v)) visited = new Set(v.filter(n => typeof n === "number"));
+  }catch(e){}
+  ["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.checked = !!prefs[id];
+  });
+  paintSettingsBtn();
+}
+function saveStore(){
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  localStorage.setItem(VISITED_KEY, JSON.stringify([...visited]));
+  paintSettingsBtn();
+}
+function paintSettingsBtn(){
+  const n = ["hideUnchecked","eventsOnly","hideVisited","compact"].filter(k => prefs[k]).length;
+  const btn = document.getElementById("settingsBtn");
+  btn.classList.toggle("on", n > 0 || document.getElementById("settingsPanel").classList.contains("open"));
+  btn.textContent = n ? "设置 " + n : "设置";
+  document.getElementById("visitedCount").textContent = "已去过 " + visited.size + " 座";
+}
+function stampKnown(c){
+  return (c.stamps||[]).some(s => s.place && s.place.indexOf("待核对") < 0);
+}
+
+function syncMarkers(list){
+  Object.keys(markers).forEach(k => { map.removeLayer(markers[k]); delete markers[k]; });
+  list.forEach(c => {
+    if(!(c.lat && c.lng)) return;
     const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>No.${c.no} ${c.name}</b><br>${c.loc}`);
     markers[c.no] = m;
-    m.on('click', () => selectCastle(c.no));
-  }
-});
+    m.on("click", () => selectCastle(c.no));
+  });
+}
 
 function selectCastle(no){
-  document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll(".card").forEach(el => el.classList.remove("active"));
   const card = document.querySelector(`.card[data-no="${no}"]`);
-  if(card){card.classList.add('active'); card.scrollIntoView({behavior:'smooth', block:'nearest'});}
+  if(card){card.classList.add("active"); card.scrollIntoView({behavior:"smooth", block:"nearest"});}
   const c = castles.find(x => x.no === no);
   if(c && markers[no]){map.setView([c.lat, c.lng], 13); markers[no].openPopup();}
+}
+function toggleVisited(no, ev){
+  if(ev) ev.stopPropagation();
+  if(visited.has(no)) visited.delete(no); else visited.add(no);
+  saveStore();
+  filter();
 }
 
 function render(list){
   const el = document.getElementById("list");
-  if(!list.length){el.innerHTML = '<div style="padding:20px;text-align:center;color:#5f6368;">没有找到匹配的城</div>'; return;}
+  const hidden = castles.length - list.length;
+  document.getElementById("countline").textContent = "显示 " + list.length + " 座" + (hidden ? "，已过滤 " + hidden + " 座" : "") + "。营业/盖章/活动会变动，出发前请确认官方。";
+  if(!list.length){el.innerHTML = '<div style="padding:20px;text-align:center;color:#5f6368;">没有符合条件的城。可以在设置里关掉过滤。</div>'; syncMarkers(list); return;}
   el.innerHTML = list.map(c => {
-    const stampsHtml = (c.stamps||[]).map(s => `<div class="stamp-item"><div>📍 ${s.place}</div><div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div><a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
+    const stamps = (c.stamps||[]).filter(s => !prefs.compact || (s.place && s.place.indexOf("待核对") < 0));
+    const stampsHtml = stamps.map(s => `<div class="stamp-item"><div>📍 ${s.place}</div>${!prefs.compact || (s.time && s.time !== "请确认") ? `<div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div>` : ""}<a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
     const eventsHtml = (c.events||[]).map(e => `<div class="event-item"><div>🎉 ${e.title}</div><div style="color:#5f6368;font-size:0.78rem;">${e.detail||""}</div>${e.link?`<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>`:""}</div>`).join("");
-    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><h3>No.${c.no} ${c.name}</h3><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
+    const hours = prefs.compact && (!c.hours || c.hours === "请确认") ? "" : `营业：${c.hours||"请确认"}`;
+    const been = visited.has(c.no);
+    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><div class="card-top"><h3 style="${been?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><button type="button" class="been-btn${been?" on":""}" onclick="toggleVisited(${c.no}, event)">${been?"已去过":"去过"}</button></div><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">${hours}${hours && c.ticket ? " · " : ""}${c.ticket?`门票：${c.ticket}`:""}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
   }).join("");
+  syncMarkers(list);
 }
 
 function filter(){
@@ -234,7 +307,10 @@ function filter(){
     const matchQ = !q || c.name.toLowerCase().includes(q) || String(c.no).includes(q) || c.loc.toLowerCase().includes(q);
     const matchR = !region || c.region === region;
     const matchT = !type || c.type === type;
-    return matchQ && matchR && matchT;
+    const matchChecked = !prefs.hideUnchecked || stampKnown(c);
+    const matchEvents = !prefs.eventsOnly || (c.events && c.events.length);
+    const matchVisited = !prefs.hideVisited || !visited.has(c.no);
+    return matchQ && matchR && matchT && matchChecked && matchEvents && matchVisited;
   });
   render(filtered);
 }
@@ -242,8 +318,34 @@ function filter(){
 document.getElementById("search").addEventListener("input", filter);
 document.getElementById("region").addEventListener("change", filter);
 document.getElementById("type").addEventListener("change", filter);
+["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => {
+  document.getElementById(id).addEventListener("change", (ev) => {
+    prefs[id] = ev.target.checked;
+    saveStore();
+    filter();
+  });
+});
+document.getElementById("settingsBtn").addEventListener("click", (ev) => {
+  ev.stopPropagation();
+  document.getElementById("settingsPanel").classList.toggle("open");
+  paintSettingsBtn();
+});
+document.getElementById("resetPrefs").addEventListener("click", () => {
+  prefs.hideUnchecked = prefs.eventsOnly = prefs.hideVisited = prefs.compact = false;
+  visited = new Set();
+  ["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => { document.getElementById(id).checked = false; });
+  saveStore();
+  filter();
+});
+document.addEventListener("click", (ev) => {
+  if(!document.getElementById("setWrap").contains(ev.target)){
+    document.getElementById("settingsPanel").classList.remove("open");
+    paintSettingsBtn();
+  }
+});
 
-render(castles);
+loadStore();
+filter();
 </script>
 </body>
 </html>
