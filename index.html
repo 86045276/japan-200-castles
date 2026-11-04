@@ -4,16 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>日本200名城攻略 | 地图・盖章・营业・活动</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500&display=swap" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  :root { --bg:#f8f9fa; --sidebar:#fff; --accent:#1a73e8; --accent-dark:#1557b0; --text:#202124; --muted:#5f6368; --border:#dadce0; --hover:#f1f3f4; }
+  :root { --bg:#f8f9fa; --sidebar:#fff; --accent:#1a1a1a; --accent-dark:#1557b0; --text:#202124; --muted:#5f6368; --border:#dadce0; --hover:#f1f3f4; }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:"Google Sans","Hiragino Sans","Noto Sans JP","PingFang SC",sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;}
-  #sidebar{width:380px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%;z-index:1000;}
-  #sidebar-header{padding:16px;border-bottom:1px solid var(--border);}
-  #sidebar-header h1{font-size:1.25rem;font-weight:500;margin-bottom:4px;}
-  .updated{font-size:0.75rem;color:var(--muted);margin-bottom:10px;}
+  body{font-family:"Noto Sans SC","Hiragino Sans","PingFang SC",sans-serif;background:#f3f2ef;color:#1a1a1a;height:100vh;overflow:hidden;}
+  #map{position:absolute;inset:0;}
+  #sidebar{position:absolute;z-index:500;top:16px;left:16px;bottom:16px;width:384px;background:#fbfbfa;border:1px solid #e3e1db;border-radius:24px;box-shadow:0 16px 48px rgb(26 26 26 / 12%);display:flex;flex-direction:column;overflow:hidden;}
+  #sidebar-header{padding:16px 16px 12px;}
+  #sidebar-header h1{font-family:"Noto Serif SC",serif;font-size:1.6rem;font-weight:500;letter-spacing:-0.02em;}
+  .kicker{font-size:0.75rem;letter-spacing:0.08em;color:#6e6a64;margin-bottom:2px;}
+  .updated{font-size:0.75rem;color:#6e6a64;margin-top:4px;}
   #search{width:100%;padding:10px 12px 10px 36px;border:1px solid var(--border);border-radius:24px;font-size:0.95rem;outline:none;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%235f6368" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>') no-repeat 10px center;}
   #search:focus{border-color:var(--accent);}
   .filters{display:flex;gap:8px;margin-top:10px;}
@@ -52,13 +55,14 @@
   .link-btn{background:#d97706;}
   #map{flex:1;height:100%;}
   .notice{font-size:0.75rem;color:var(--muted);padding:8px 16px;background:#fff8e1;border-top:1px solid var(--border);}
-  @media(max-width:768px){body{flex-direction:column;}#sidebar{width:100%;height:45vh;}#map{height:55vh;}}
+  @media(max-width:768px){#sidebar{top:auto;left:0;right:0;bottom:0;width:auto;height:52vh;border-radius:24px 24px 0 0;}}
 </style>
 </head>
 <body>
 <div id="sidebar">
   <div id="sidebar-header">
-    <h1>🇯🇵 日本200名城</h1>
+    <p class="kicker">城郭纪行</p>
+    <h1>日本200名城</h1>
     <div class="updated">数据核对：2026年11月4日 · 在「设置」里输入城号或城名筛选，并选择图面显示。</div>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
     <div class="filters">
@@ -79,7 +83,7 @@
     <div class="hint">输入城号或城名。多个城号用空格或逗号，例如 59, 54。</div>
     <input class="field" id="pickInput" placeholder="59 或 姫路城">
     <div id="suggest"></div>
-    <div class="sec" style="display:flex;justify-content:space-between;align-items:center;"><span id="pickedTitle">已筛选 0</span><button type="button" id="clearPicked" style="border:0;background:none;color:#1a73e8;cursor:pointer;font-size:0.75rem;">清除</button></div>
+    <div class="sec" style="display:flex;justify-content:space-between;align-items:center;"><span id="pickedTitle">已筛选 0</span><button type="button" id="clearPicked" style="border:0;background:none;color:#1a1a1a;cursor:pointer;font-size:0.75rem;">清除</button></div>
     <div class="hint" id="pickedEmpty">还没有。去过的城加到这里，再选「未筛选的」就会从地图上消失。</div>
     <div class="chips" id="pickedChips"></div>
   </div>
@@ -221,14 +225,14 @@ styleCtl.onAdd = function() {
     const b = document.createElement('button');
     b.textContent = label;
     b.dataset.k = k;
-    b.style.cssText = 'border:0;background:' + (k==='m'?'#1a73e8':'#fff') + ';color:' + (k==='m'?'#fff':'#202124') + ';padding:8px 12px;cursor:pointer;' + (i?'border-left:1px solid #dadce0':'');
+    b.style.cssText = 'border:0;background:' + (k==='m'?'#1a1a1a':'#fff') + ';color:' + (k==='m'?'#fff':'#202124') + ';padding:8px 12px;cursor:pointer;' + (i?'border-left:1px solid #dadce0':'');
     b.onclick = function(ev) {
       L.DomEvent.stop(ev);
       map.removeLayer(gTiles);
       gTiles = googleTiles(k).addTo(map);
       div.querySelectorAll('button').forEach(x => {
         const on = x.dataset.k === k;
-        x.style.background = on ? '#1a73e8' : '#fff';
+        x.style.background = on ? '#1a1a1a' : '#fff';
         x.style.color = on ? '#fff' : '#202124';
       });
     };
@@ -287,7 +291,7 @@ function paintSettings(){
   if(!matches.length){ box.innerHTML = '<div class="hint">没有匹配的城</div>'; return; }
   box.innerHTML = `<div class="suggest">${matches.map(c => {
     const on = picked.has(c.no);
-    return `<button type="button" onclick="${on ? `removePicked(${c.no})` : `addPicked([${c.no}])`}">No.${c.no} ${c.name}<span style="color:${on ? "#5f6368" : "#1a73e8"}">${on ? "移除" : "加入"}</span></button>`;
+    return `<button type="button" onclick="${on ? `removePicked(${c.no})` : `addPicked([${c.no}])`}">No.${c.no} ${c.name}<span style="color:${on ? "#5f6368" : "#1a1a1a"}">${on ? "移除" : "加入"}</span></button>`;
   }).join("")}</div>`;
 }
 
@@ -298,7 +302,7 @@ function syncMarkers(list){
     const hollow = scope === "all" && picked.has(c.no);
     const icon = L.divIcon({
       className: "",
-      html: `<span style="display:block;width:14px;height:14px;border-radius:50%;background:${hollow?"#fff":"#1a73e8"};border:2px solid ${hollow?"#1a73e8":"#fff"};box-shadow:0 1px 3px rgba(0,0,0,.35)"></span>`,
+      html: `<span style="display:block;width:14px;height:14px;border-radius:50%;background:${hollow?"#fff":"#1a1a1a"};border:2px solid ${hollow?"#1a1a1a":"#fff"};box-shadow:0 1px 3px rgba(0,0,0,.35)"></span>`,
       iconSize: [14, 14],
       iconAnchor: [7, 7]
     });
@@ -345,10 +349,10 @@ function render(list){
     return;
   }
   el.innerHTML = list.map(c => {
-    const stampsHtml = (c.stamps||[]).map(s => `<div class="stamp-item"><div>📍 ${s.place}</div><div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div><a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
-    const eventsHtml = (c.events||[]).map(e => `<div class="event-item"><div>🎉 ${e.title}</div><div style="color:#5f6368;font-size:0.78rem;">${e.detail||""}</div>${e.link?`<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>`:""}</div>`).join("");
+    const stampsHtml = (c.stamps||[]).map(s => `<div class="stamp-item"><div>${s.place}</div><div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div><a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
+    const eventsHtml = (c.events||[]).map(e => `<div class="event-item"><div>${e.title}</div><div style="color:#5f6368;font-size:0.78rem;">${e.detail||""}</div>${e.link?`<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>`:""}</div>`).join("");
     const on = picked.has(c.no);
-    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><h3 style="${on?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}${on?" · 已筛选":""}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
+    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><h3 style="${on?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}${on?" · 已筛选":""}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a1a1a;">官方网站</a>`:""}</div></div>`;
   }).join("");
   syncMarkers(list);
 }
