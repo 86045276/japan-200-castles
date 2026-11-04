@@ -8,174 +8,187 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
-    --bg: #f7f3ee;
-    --card: #fff;
-    --accent: #8b3a3a;
-    --accent2: #2c5f4e;
-    --text: #2c2c2c;
-    --muted: #666;
-    --border: #e0d6cc;
+    --bg: #f8f9fa;
+    --sidebar: #ffffff;
+    --accent: #1a73e8;
+    --accent-dark: #1557b0;
+    --text: #202124;
+    --muted: #5f6368;
+    --border: #dadce0;
+    --hover: #f1f3f4;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: "Hiragino Sans", "Noto Sans JP", "PingFang SC", sans-serif;
+    font-family: "Google Sans", "Hiragino Sans", "Noto Sans JP", "PingFang SC", sans-serif;
     background: var(--bg);
     color: var(--text);
-    margin: 0;
-    line-height: 1.6;
-  }
-  header {
-    background: linear-gradient(135deg, #5a2a2a, #8b3a3a);
-    color: #fff;
-    padding: 1.2rem 1rem;
-    text-align: center;
-  }
-  header h1 { margin: 0 0 0.3rem; font-size: 1.7rem; }
-  header p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
-  #map {
-    height: 420px;
-    width: 100%;
-    border-bottom: 2px solid #ddd;
-  }
-  .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
-  .notice {
-    background: #fff8e6;
-    border-left: 4px solid #e6a817;
-    padding: 0.7rem 1rem;
-    margin: 0.8rem 0;
-    border-radius: 4px;
-    font-size: 0.88rem;
-  }
-  .controls {
+    height: 100vh;
+    overflow: hidden;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    background: var(--card);
-    padding: 0.8rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
-  .controls input, .controls select {
-    padding: 0.45rem 0.6rem;
+  #sidebar {
+    width: 380px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: 1000;
+  }
+  #sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+  }
+  #sidebar-header h1 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  #search {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    font-size: 0.95rem;
+    outline: none;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%235f6368" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>') no-repeat 10px center;
+  }
+  #search:focus { border-color: var(--accent); }
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .filters select {
+    flex: 1;
+    padding: 6px 8px;
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
   }
-  .controls input { flex: 1; min-width: 180px; }
+  #list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
   .card {
-    background: var(--card);
+    padding: 12px;
     border-radius: 8px;
-    padding: 0.9rem 1.1rem;
-    margin-bottom: 0.7rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .card:hover, .card.active {
+    background: var(--hover);
+    border-color: var(--border);
   }
   .card h3 {
-    margin: 0 0 0.3rem;
-    color: var(--accent);
-    font-size: 1.1rem;
-    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 4px;
   }
-  .meta { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; }
-  .stamp, .hours, .event {
-    padding: 0.4rem 0.7rem;
-    margin: 0.4rem 0;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.9rem;
+  .meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
+  .stamp-item {
+    background: #e8f0fe;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin: 4px 0;
+    font-size: 0.85rem;
   }
-  .stamp { background: #f0f7f4; border-left: 3px solid var(--accent2); }
-  .hours { background: #f8f4ff; border-left: 3px solid #6a4c93; }
-  .event { background: #fff4e6; border-left: 3px solid #d97706; }
-  .info { font-size: 0.88rem; }
-  .tag {
+  .stamp-item .place { font-weight: 500; }
+  .stamp-item .time { color: var(--muted); font-size: 0.78rem; }
+  .nav-btn {
     display: inline-block;
-    background: #eee;
-    padding: 0.05rem 0.45rem;
-    border-radius: 10px;
-    font-size: 0.72rem;
-    margin-left: 0.3rem;
+    margin-top: 4px;
+    padding: 4px 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
   }
-  .tag.major { background: #ffe0e0; color: #8b3a3a; }
-  footer {
-    text-align: center;
-    padding: 1.5rem 1rem;
+  .nav-btn:hover { background: var(--accent-dark); }
+  #map {
+    flex: 1;
+    height: 100%;
+  }
+  .notice {
+    font-size: 0.75rem;
     color: var(--muted);
-    font-size: 0.8rem;
+    padding: 8px 16px;
+    background: #fff8e1;
+    border-top: 1px solid var(--border);
   }
-  .no-result { text-align: center; padding: 2rem; color: var(--muted); }
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    #sidebar { width: 100%; height: 45vh; }
+    #map { height: 55vh; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>🇯🇵 日本200名城攻略</h1>
-  <p>地图定位 · 盖章位置 · 营业时间 · 近期活动 · 门票・御城印</p>
-</header>
-
-<div id="map"></div>
-
-<div class="container">
-  <div class="notice">
-    <strong>重要：</strong>营业时间、休馆、活动、印章位置会变动。地图标记可点击查看详情。出发前请确认官方网站。官方集章需正式印章账。活动信息仅供参考，多为季节性（樱花、红叶、灯光等）。
-  </div>
-
-  <div class="controls">
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>🇯🇵 日本200名城</h1>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
-    <select id="region">
-      <option value="">全部区域</option>
-      <option value="北海道">北海道</option>
-      <option value="東北">东北</option>
-      <option value="関東">关东</option>
-      <option value="甲信越">甲信越</option>
-      <option value="北陸">北陆</option>
-      <option value="東海">东海</option>
-      <option value="近畿">近畿</option>
-      <option value="中国">中国</option>
-      <option value="四国">四国</option>
-      <option value="九州">九州</option>
-      <option value="沖縄">冲绳</option>
-    </select>
-    <select id="type">
-      <option value="">全部</option>
-      <option value="100">日本100名城</option>
-      <option value="続">続日本100名城</option>
-    </select>
+    <div class="filters">
+      <select id="region">
+        <option value="">全部区域</option>
+        <option value="北海道">北海道</option>
+        <option value="東北">东北</option>
+        <option value="関東">关东</option>
+        <option value="甲信越">甲信越</option>
+        <option value="北陸">北陆</option>
+        <option value="東海">东海</option>
+        <option value="近畿">近畿</option>
+        <option value="中国">中国</option>
+        <option value="四国">四国</option>
+        <option value="九州">九州</option>
+        <option value="沖縄">冲绳</option>
+      </select>
+      <select id="type">
+        <option value="">全部</option>
+        <option value="100">日本100名城</option>
+        <option value="続">続100名城</option>
+      </select>
+    </div>
   </div>
-
   <div id="list"></div>
+  <div class="notice">营业时间与盖章地点会变动，出发前请确认官方。点击「导航」可直接打开 Google Maps。</div>
 </div>
-
-<footer>
-  数据来源：公开信息整理（截至2026年11月）。推荐搭配「ニッポン城めぐり」App与官方确认。<br>
-  御城印多为现场购买（约300-500日元）。
-</footer>
+<div id="map"></div>
 
 <script>
 const castles = [
-  {no:2, name:"五棱郭", loc:"北海道函馆市", region:"北海道", type:"100", lat:41.796, lng:140.757, stamp:"箱馆奉行所附属「板库」入口附近（10:00-17:00）", hours:"奉行所等约9:00-17:00，季节变动", ticket:"奉行所有料", gojoin:"有", event:"樱花季（4-5月）热闹，冬季注意积雪", note:"星形城郭"},
-  {no:4, name:"弘前城", loc:"青森县弘前市", region:"東北", type:"100", lat:40.607, lng:140.464, stamp:"弘前城情报馆（9:00-17:00，樱花季可能延长至21:00）", hours:"天守约9:00-17:00（季节/活动变动）", ticket:"天守有料约600-800日元", gojoin:"有", event:"樱花季（4月下旬-5月上旬）为最盛期", note:"现存天守"},
-  {no:12, name:"会津若松城", loc:"福岛县会津若松市", region:"東北", type:"100", lat:37.488, lng:139.929, stamp:"天守阁内卖店（约8:30-17:00）", hours:"天守约8:30-17:00", ticket:"天守有料", gojoin:"有", event:"常有季节限定活动，确认官方", note:"外观复原天守"},
-  {no:23, name:"小田原城", loc:"神奈川县小田原市", region:"関東", type:"100", lat:35.250, lng:139.153, stamp:"天守阁1楼", hours:"约9:00-17:00（最终入馆16:30左右），年末有休", ticket:"天守成人约1000日元", gojoin:"有", event:"常有历史相关活动", note:""},
-  {no:28, name:"小诸城", loc:"长野县小诸市", region:"甲信越", type:"100", lat:36.327, lng:138.421, stamp:"怀古园事务所", hours:"约8:30-17:00（季节变动）", ticket:"入园有料约500日元", gojoin:"有", event:"红叶まつり2026（10/24-11/23），有灯光", note:"怀古园"},
-  {no:29, name:"松本城", loc:"长野县松本市", region:"甲信越", type:"100", lat:36.239, lng:137.969, stamp:"松本市观光信息中心 / 管理事务所附近", hours:"约8:30-17:00（季节/冬季变动）", ticket:"成人约700-1000日元", gojoin:"有", event:"常有夜景/季节活动", note:"国宝现存天守"},
-  {no:35, name:"金泽城", loc:"石川县金泽市", region:"北陸", type:"100", lat:36.564, lng:136.659, stamp:"二之丸案内所、石川门入口案内所等", hours:"公园自由，内部设施约9:00-16:30左右", ticket:"部分设施有料", gojoin:"有", event:"季节活动较多", note:"公园免费"},
-  {no:44, name:"名古屋城", loc:"爱知县名古屋市", region:"東海", type:"100", lat:35.185, lng:136.899, stamp:"天守阁内 / 相关案内所", hours:"约9:00-16:30（最终入馆）", ticket:"天守有料", gojoin:"有", event:"常有特别展", note:"RC复原天守"},
-  {no:50, name:"彦根城", loc:"滋贺县彦根市", region:"近畿", type:"100", lat:35.276, lng:136.252, stamp:"天守或管理处", hours:"约8:30-17:00", ticket:"成人约800-1000日元", gojoin:"有", event:"樱花/红叶季热闹", note:"国宝现存天守"},
-  {no:54, name:"大阪城", loc:"大阪府大阪市", region:"近畿", type:"100", lat:34.687, lng:135.526, stamp:"天守阁1楼案内柜台附近", hours:"天守约9:00-17:00/18:00（最终入馆提前），12/28-1/1休", ticket:"天守成人约1200日元", gojoin:"天守阁1楼商店（约300日元起，有限定）", event:"秋祭等活动，常有限定御城印", note:"公园免费"},
-  {no:59, name:"姫路城", loc:"兵库县姫路市", region:"近畿", type:"100", lat:34.839, lng:134.694, stamp:"管理事务所入口附近（售票处旁）", hours:"9:00-17:00（最终入城16:00），夏季可能延长，休城12/29-30", ticket:"一般成人约2500日元（2026年起），市民1000日元，18岁以下免费", gojoin:"有（入城口附近卖店约300日元）", event:"常有特别展览/夜景，确认官方", note:"世界遗产・国宝"},
-  {no:64, name:"松江城", loc:"岛根县松江市", region:"中国", type:"100", lat:35.475, lng:133.050, stamp:"天守或相关设施", hours:"天守约8:30-17:00/18:00（季节变动），年中无休较多", ticket:"天守成人约1200日元", gojoin:"有", event:"夜景/季节活动", note:"国宝现存天守"},
-  {no:70, name:"冈山城", loc:"冈山县冈山市", region:"中国", type:"100", lat:34.665, lng:133.936, stamp:"天守内或案内所", hours:"约9:00-17:00", ticket:"天守有料", gojoin:"有（纪念限定等）", event:"2026年11月重建60周年相关活动（曾有免费日与限定御城印）", note:"乌城"},
-  {no:73, name:"广岛城", loc:"广岛县广岛市", region:"中国", type:"100", lat:34.403, lng:132.459, stamp:"相关案内所 / 天守区域", hours:"约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"「宵めぐり2026」灯光活动（约2026/12/18-2027/1/11，含投影）", note:"鲤城"},
-  {no:81, name:"松山城", loc:"爱媛县松山市", region:"四国", type:"100", lat:33.845, lng:132.765, stamp:"天守内或案内所", hours:"约9:00-17:00", ticket:"有料", gojoin:"有", event:"山城夜景PR活动等", note:"现存天守"},
-  {no:92, name:"熊本城", loc:"熊本县熊本市", region:"九州", type:"100", lat:32.806, lng:130.706, stamp:"相关案内所 / 天守区域", hours:"确认最新开放", ticket:"天守有料", gojoin:"有", event:"复原相关活动，注意开放状况", note:"地震后复原中"},
-  {no:100, name:"首里城", loc:"冲绳县那霸市", region:"沖縄", type:"100", lat:26.217, lng:127.719, stamp:"首里翠馆等（注意开放）", hours:"确认最新", ticket:"有料", gojoin:"有", event:"复原中，活动视情况", note:"火灾后复原"},
-  {no:105, name:"白石城", loc:"宫城县白石市", region:"東北", type:"続", lat:38.002, lng:140.617, stamp:"白石城天守阁", hours:"天守约9:00-16:00左右", ticket:"天守有料", gojoin:"有（博物馆卖店）", event:"季节活动", note:"木造复原天守"},
-  {no:118, name:"忍城", loc:"埼玉县行田市", region:"関東", type:"続", lat:36.140, lng:139.455, stamp:"行田市乡土博物馆 / 观光物产馆", hours:"博物馆约9:00-16:30，周一休等", ticket:"博物馆有料", gojoin:"有", event:"常有历史讲座/活动", note:"水城相关"},
-  {no:130, name:"高岛城", loc:"长野县谏访市", region:"甲信越", type:"続", lat:36.041, lng:138.113, stamp:"天守内1F（有料区域）", hours:"天守约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"季节活动", note:""},
-  {no:181, name:"小仓城", loc:"福冈县北九州市", region:"九州", type:"続", lat:33.884, lng:130.874, stamp:"しろテラス等", hours:"天守约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"常有活动", note:"复原天守"}
+  {no:2, name:"五棱郭", loc:"北海道函馆市", region:"北海道", type:"100", lat:41.796, lng:140.757,
+   stamps:[{place:"箱馆奉行所附属「板库」入口附近", time:"10:00-17:00"}],
+   hours:"约9:00-17:00（季节变动）", ticket:"奉行所有料", gojoin:"有", event:"樱花季热闹", note:"星形城郭"},
+  {no:4, name:"弘前城", loc:"青森县弘前市", region:"東北", type:"100", lat:40.607, lng:140.464,
+   stamps:[{place:"弘前城情报馆", time:"9:00-17:00（樱花季可能延长）"}],
+   hours:"天守约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"樱花季最盛", note:"现存天守"},
+  {no:29, name:"松本城", loc:"长野县松本市", region:"甲信越", type:"100", lat:36.239, lng:137.969,
+   stamps:[{place:"松本城管理事务所", time:"8:30-17:00"}, {place:"松本市观光信息中心", time:"请确认"}],
+   hours:"约8:30-17:00", ticket:"成人约700-1000日元", gojoin:"有", event:"常有季节活动", note:"国宝现存天守"},
+  {no:54, name:"大阪城", loc:"大阪府大阪市", region:"近畿", type:"100", lat:34.687, lng:135.526,
+   stamps:[{place:"天守阁1楼案内柜台附近", time:"9:00-17:00（最终入馆提前）"}],
+   hours:"天守约9:00-17:00/18:00", ticket:"成人约1200日元", gojoin:"有", event:"常有限定活动", note:"公园免费"},
+  {no:59, name:"姫路城", loc:"兵库县姫路市", region:"近畿", type:"100", lat:34.839, lng:134.694,
+   stamps:[{place:"管理事务所入口（入城口横）", time:"9:00-16:00（夏季可延长）", closed:"12/29-30"}],
+   hours:"9:00-17:00（最终入城16:00）", ticket:"成人约1000-2500日元", gojoin:"有", event:"特别展览等", note:"世界遗产・国宝"},
+  {no:64, name:"松江城", loc:"岛根县松江市", region:"中国", type:"100", lat:35.475, lng:133.050,
+   stamps:[{place:"天守或相关设施", time:"约8:30-17:00"}],
+   hours:"天守约8:30-17:00", ticket:"成人约1200日元", gojoin:"有", event:"夜景活动", note:"国宝现存天守"},
+  {no:73, name:"广岛城", loc:"广岛县广岛市", region:"中国", type:"100", lat:34.403, lng:132.459,
+   stamps:[{place:"相关案内所 / 天守区域", time:"约9:00-17:00"}],
+   hours:"约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"宵めぐり灯光活动", note:"鲤城"},
+  {no:92, name:"熊本城", loc:"熊本县熊本市", region:"九州", type:"100", lat:32.806, lng:130.706,
+   stamps:[{place:"相关案内所", time:"确认最新"}],
+   hours:"确认最新", ticket:"天守有料", gojoin:"有", event:"复原相关", note:"地震后复原中"}
 ];
 
-// Map init
 const map = L.map('map').setView([36.5, 138], 5);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap'
@@ -185,47 +198,51 @@ const markers = {};
 castles.forEach(c => {
   if (c.lat && c.lng) {
     const marker = L.marker([c.lat, c.lng]).addTo(map)
-      .bindPopup(`<b>No.${c.no} ${c.name}</b><br>${c.loc}<br><small>点击列表查看详情</small>`);
+      .bindPopup(`<b>No.${c.no} ${c.name}</b><br>${c.loc}`);
     markers[c.no] = marker;
-    marker.on('click', () => {
-      document.querySelectorAll('.card').forEach(el => el.style.border = '');
-      const card = document.querySelector(`.card[data-no="${c.no}"]`);
-      if (card) {
-        card.scrollIntoView({behavior:'smooth', block:'center'});
-        card.style.border = '2px solid #8b3a3a';
-      }
-    });
+    marker.on('click', () => selectCastle(c.no));
   }
 });
+
+function selectCastle(no) {
+  document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
+  const card = document.querySelector(`.card[data-no="${no}"]`);
+  if (card) {
+    card.classList.add('active');
+    card.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+  const c = castles.find(x => x.no === no);
+  if (c && markers[no]) {
+    map.setView([c.lat, c.lng], 13);
+    markers[no].openPopup();
+  }
+}
 
 function render(list) {
   const el = document.getElementById("list");
   if (list.length === 0) {
-    el.innerHTML = '<div class="no-result">没有找到匹配的城</div>';
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:#5f6368;">没有找到匹配的城</div>';
     return;
   }
-  el.innerHTML = list.map(c => `
-    <div class="card" data-no="${c.no}">
-      <h3 onclick="focusCastle(${c.no})">No.${c.no} ${c.name} <span class="tag ${c.type==='100'?'major':''}">${c.type==='100'?'日本100名城':'続100名城'}</span></h3>
-      <div class="meta">${c.loc} · ${c.region}</div>
-      <div class="stamp"><strong>盖章位置：</strong>${c.stamp}</div>
-      <div class="hours"><strong>营业时间：</strong>${c.hours || "遗迹多为自由开放，设施有时间限制，请确认"}</div>
-      <div class="event"><strong>近期活动：</strong>${c.event || "暂无特别活动信息，请查官方网站/当地观光协会"}</div>
-      <div class="info">
-        <div><strong>门票：</strong>${c.ticket || "遗迹多为免费，有设施则有料"}</div>
-        <div><strong>御城印：</strong>${c.gojoin || "部分城有，多在卖店/案内所现场购买（约300-500日元）"}</div>
-        ${c.note ? `<div><strong>备注：</strong>${c.note}</div>` : ""}
+  el.innerHTML = list.map(c => {
+    const stampsHtml = (c.stamps || []).map(s => `
+      <div class="stamp-item">
+        <div class="place">📍 ${s.place}</div>
+        <div class="time">⏰ ${s.time || "请确认"}${s.closed ? " · 休：" + s.closed : ""}</div>
+        <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a>
       </div>
-    </div>
-  `).join("");
-}
-
-function focusCastle(no) {
-  const c = castles.find(x => x.no === no);
-  if (c && c.lat && markers[no]) {
-    map.setView([c.lat, c.lng], 12);
-    markers[no].openPopup();
-  }
+    `).join("");
+    return `
+      <div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})">
+        <h3>No.${c.no} ${c.name}</h3>
+        <div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>
+        ${stampsHtml}
+        <div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">
+          营业：${c.hours || "请确认"} · 门票：${c.ticket || "遗迹多为免费"}
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function filter() {
