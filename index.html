@@ -332,6 +332,122 @@ function closeDetail(){
   document.getElementById("list").classList.remove("off");
   document.getElementById("countline").classList.remove("off");
 }
+const SEALS = {
+  4: [
+    { kind: "御城印", place: "4/1–11/23 天守内卖店；冬季在弘前城情报馆", price: "300日元" },
+    { kind: "100名城城卡", place: "天守内卖店（4/1–11/23）、情报馆（全年）" },
+  ],
+  5: [{ kind: "御城印", place: "根城之广场收费处；八户市博物馆" }],
+  12: [{ kind: "御城印", place: "鹤城观光案内所" }],
+  13: [{ kind: "御城印", place: "城山公园内二之丸茶屋" }],
+  15: [{ kind: "御城印", place: "鑁阿寺" }],
+  16: [{ kind: "御城印", place: "箕轮城交流市（周日 10:00–14:00，雨天取消）" }],
+  17: [{ kind: "御城印", place: "史迹金山城迹向导设施" }],
+  20: [{ kind: "御城印", place: "佐仓市观光协会" }],
+  21: [{ kind: "御城印", place: "多在「江户城天守再建会」活动现场，平日城内不一定有卖" }],
+  23: [{ kind: "御城印", place: "小田原城天守 1 楼" }],
+  29: [
+    { kind: "御城印", place: "松本城管理课（有料区域内）", price: "1种 300日元，2种 500日元" },
+    { kind: "100名城城卡", place: "松本城卖店（有料区域内）" },
+  ],
+  30: [{ kind: "御城印", place: "高远町历史博物馆；高远怀旧馆" }],
+  32: [{ kind: "御城印", place: "上越市埋藏文化财中心" }],
+  33: [{ kind: "御城印", place: "三之丸茶屋" }],
+  34: [{ kind: "御城印", place: "七尾城史资料馆" }],
+  36: [
+    { kind: "御城印", place: "丸冈城券卖所", price: "300日元，期间限定版另计" },
+    { kind: "100名城城卡", place: "入场券卖场" },
+  ],
+  37: [{ kind: "御城印", place: "一乘谷朝仓氏遗迹复原町并受付" }],
+  38: [{ kind: "御城印", place: "岩村山庄；街并交流馆" }],
+  39: [
+    { kind: "御城印", place: "金华山索道乘车处" },
+    { kind: "100名城城卡", place: "2026/11/3 起：岐阜市历史博物馆、加藤荣三·东一纪念美术馆" },
+  ],
+  40: [{ kind: "御城印", place: "山中城迹卖店" }],
+  41: [{ kind: "御城印", place: "骏府公园入场券卖所" }],
+  42: [{ kind: "御城印", place: "挂川城御殿" }],
+  43: [
+    { kind: "御城印", place: "犬山城前观光服务处", price: "300日元" },
+    { kind: "100名城城卡", place: "城郭内白帝观光" },
+  ],
+  44: [{ kind: "御城印", place: "天守阁前卖店；正门旁卖店" }],
+  45: [
+    { kind: "御城印", place: "天守 1 楼受付" },
+    { kind: "100名城城卡", place: "冈崎城天守" },
+  ],
+  46: [{ kind: "御城印", place: "长篠城址史迹保存馆" }],
+  47: [{ kind: "御城印", place: "天守售票处" }],
+  48: [{ kind: "御城印", place: "松阪市观光信息中心；豪商之街松阪观光交流中心" }],
+  49: [{ kind: "御城印", place: "小谷城战国历史资料馆" }],
+  50: [
+    { kind: "御城印", place: "表门售票处；开国纪念馆", price: "以现场为准" },
+    { kind: "100名城城卡", place: "开国纪念馆" },
+  ],
+  54: [{ kind: "100名城城卡", place: "天守阁 1 楼博物馆商店" }],
+  59: [
+    { kind: "御城印", place: "常设版以现场卖店为准；活动限定版多在会场出口", price: "以现场为准" },
+    { kind: "100名城城卡", place: "出改札旁卖店；西之丸化妆橹前卖店" },
+  ],
+  64: [
+    { kind: "御城印·手书标准", place: "ぶらっと松江观光案内所等", price: "550日元" },
+    { kind: "御城印·角色联名", place: "ぶらっと松江观光案内所等", price: "700日元" },
+    { kind: "御城印·怪谈 / 古代", place: "ぶらっと松江观光案内所等", price: "650日元" },
+    { kind: "御城印·大名", place: "ぶらっと松江观光案内所等", price: "600日元" },
+    { kind: "御城印·缘结", place: "ぶらっと松江观光案内所等", price: "1000日元" },
+    { kind: "御城印·限定国宝", place: "ぶらっと松江观光案内所等", price: "1000日元，每人限购" },
+    { kind: "100名城城卡", place: "ぶらっと松江观光案内所" },
+  ],
+  68: [
+    { kind: "御城印", place: "天守", price: "以现场为准" },
+    { kind: "100名城城卡", place: "券卖所；风箱峠卖店（8合目）；登山整理巴士乘车处" },
+  ],
+  78: [
+    { kind: "御城印（天守版）", place: "天守受付", price: "以现场为准" },
+    { kind: "御城印帐", place: "城内土特产店", price: "约 2800日元" },
+    { kind: "100名城城卡", place: "丸龟城天守" },
+  ],
+  81: [
+    { kind: "御城印", place: "本丸广场售票窗口", price: "以现场为准" },
+    { kind: "100名城城卡", place: "观光案内所；出札" },
+  ],
+  83: [{ kind: "御城印", place: "天守内，仅现场", price: "以现场为准" }],
+  84: [{ kind: "御城印", place: "天守受付 / 售票处", price: "以现场为准" }],
+  91: [{ kind: "100名城城卡", place: "天守阁门票卖场" }],
+  92: [
+    {
+      kind: "复兴祈愿御城印",
+      place: "二之丸休息处（免费区，约 9:00–17:00）；本丸休息处（有料区，约 9:00–16:30）。案内所和网上不卖",
+      price: "500日元，数量有限",
+    },
+  ],
+};
+const MORE_EVENTS = {
+  29: [
+    {
+      title: "国宝松本城 Week",
+      detail: "2026/11/3–11/10",
+      link: "https://visitmatsumoto.com/spot/detail_1001.html",
+    },
+  ],
+  59: [
+    {
+      title: "夜间点灯",
+      detail: "以姫路城便览当页公告为准",
+      link: "https://himejicastle.jp/",
+    },
+  ],
+};
+const MORE_OFFICIAL = {
+  59: "https://himejicastle.jp/",
+};
+function esc(s){
+  var amp = String.fromCharCode(38) + "amp;";
+  var lt = String.fromCharCode(38) + "lt;";
+  var gt = String.fromCharCode(38) + "gt;";
+  var quot = String.fromCharCode(38) + "quot;";
+  return String(s || "").split("&").join(amp).split("<").join(lt).split(">").join(gt).split('"').join(quot);
+}
 function selectCastle(no){
   const c = castles.find(x => x.no === no);
   if(!c) return;
@@ -341,18 +457,23 @@ function selectCastle(no){
   document.getElementById("sidebar-header").classList.add("off");
   document.getElementById("countline").classList.add("off");
   const v = visitOf(c);
-  const stamps = (c.stamps||[]).map(s => `<div class="block" style="margin-top:12px;"><p>${s.place}</p><p class="muted">${s.time||"请确认"}</p></div>`).join("");
-  const events = (c.events||[]).map(e => `<div class="block" style="margin-top:12px;"><p>${e.title}</p>${e.detail?`<p class="muted">${e.detail}</p>`:""}${e.link?`<p><a href="${e.link}" target="_blank">查看活动</a></p>`:""}</div>`).join("");
+  const official = c.official || MORE_OFFICIAL[c.no] || "";
+  const events = (c.events||[]).concat(MORE_EVENTS[c.no]||[]);
+  const seals = SEALS[c.no] || [];
+  const stamps = (c.stamps||[]).map(s => `<div class="block" style="margin-top:12px;"><p>${esc(s.place)}</p><p class="muted">${esc(s.time||"请确认")}</p></div>`).join("");
+  const eventHtml = events.length ? events.map(e => `<div class="block" style="margin-top:12px;"><p>${esc(e.title)}</p>${e.detail?`<p class="muted">${esc(e.detail)}</p>`:""}${e.link?`<p><a href="${esc(e.link)}" target="_blank">${esc(e.link)}</a></p>`:`<p class="muted">暂无活动链接</p>`}</div>`).join("") : `<p class="muted">目前没有核对到公开活动。出发前看官网。</p>`;
+  const sealHtml = seals.length ? seals.map(s => `<div class="block" style="margin-top:12px;"><p>${esc(s.kind)}</p><p>${esc(s.place)}</p>${s.price?`<p class="muted">${esc(s.price)}</p>`:""}</div>`).join("") : `<p class="muted">售卖地点和种类还没核对。</p>`;
   document.getElementById("detail").innerHTML = `<button type="button" class="back" onclick="closeDetail()">返回</button>
-    <p class="muted">No.${c.no} · ${c.type==="100"?"日本100名城":"続100名城"} · ${c.region}</p>
-    <h2>${c.name}</h2>
-    <p class="muted">${c.loc}</p>
+    <p class="muted">No.${c.no} · ${c.type==="100"?"日本100名城":"続100名城"} · ${esc(c.region)}</p>
+    <h2>${esc(c.name)}</h2>
+    <p class="muted">${esc(c.loc)}</p>
     <a class="poi" href="${poiUrl(c)}" target="_blank">导航到这座城</a>
-    <div class="block"><h3>营业</h3><p>${v.hours}</p>${v.closed?`<p class="muted">休馆 ${v.closed}</p>`:""}<p class="muted">门票 ${c.ticket||"遗迹多为免费"}</p></div>
+    <div class="block"><h3>营业</h3><p>${esc(v.hours)}</p>${v.closed?`<p class="muted">休馆 ${esc(v.closed)}</p>`:""}<p class="muted">门票 ${esc(c.ticket||"遗迹多为免费")}</p></div>
+    <div class="block"><h3>官网</h3>${official?`<p><a href="${esc(official)}" target="_blank">${esc(official)}</a></p>`:`<p class="muted">官网地址还没核对。</p>`}</div>
+    <div class="block"><h3>近期活动</h3>${eventHtml}</div>
+    <div class="block"><h3>城印</h3><p class="muted">付费的御城印、城卡。和下面免费的100名城盖章不是一回事。</p>${sealHtml}</div>
     <div class="block"><h3>盖章</h3>${stamps}</div>
-    ${events?`<div class="block"><h3>近期活动</h3>${events}</div>`:""}
-    ${c.official?`<div class="block"><a href="${c.official}" target="_blank">官方网站</a></div>`:""}
-    <p class="muted" style="margin-top:20px;">休馆多指天守和资料馆。出发前请再看官方。</p>`;
+    <p class="muted" style="margin-top:20px;">休馆多指天守和资料馆。城印种类和价格会换，出发前请再看官方。</p>`;
   document.getElementById("detail").classList.add("open");
   if(markers[no]) map.setView([c.lat, c.lng], 13);
 }
