@@ -12,7 +12,7 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:"Noto Sans SC","Hiragino Sans","PingFang SC",sans-serif;background:#f3f2ef;color:#1a1a1a;height:100vh;overflow:hidden;}
   #map{position:absolute;inset:0;}
-  #sidebar{position:absolute;z-index:500;top:16px;left:16px;bottom:16px;width:384px;background:#fbfbfa;border:1px solid #e3e1db;border-radius:24px;box-shadow:0 16px 48px rgb(26 26 26 / 12%);display:flex;flex-direction:column;overflow:hidden;}
+  #sidebar{position:absolute;z-index:1100;top:16px;left:16px;bottom:16px;width:384px;background:#fbfbfa;border:1px solid #e3e1db;border-radius:24px;box-shadow:0 16px 48px rgb(26 26 26 / 12%);display:flex;flex-direction:column;overflow:hidden;}
   #sidebar-header{padding:16px 16px 12px;}
   #sidebar-header h1{font-family:"Noto Serif SC",serif;font-size:1.6rem;font-weight:500;letter-spacing:-0.02em;}
   .kicker{font-size:0.75rem;letter-spacing:0.08em;color:#6e6a64;margin-bottom:2px;}
@@ -207,7 +207,7 @@ const castles = [
 // 注：为控制文件大小，此处仅展示部分続100名城。完整列表可通过搜索编号查看，详细信息由每月任务补充。
 ];
 
-const map = L.map('map').setView([36.5, 138], 5);
+const map = L.map('map', { zoomControl: false }).setView([36.5, 138], 5);
 function googleTiles(lyrs) {
   return L.tileLayer('https://mt{s}.google.com/vt/lyrs=' + lyrs + '&hl=zh-CN&gl=JP&x={x}&y={y}&z={z}', {
     subdomains: ['0','1','2','3'],
@@ -242,6 +242,7 @@ styleCtl.onAdd = function() {
   return div;
 };
 styleCtl.addTo(map);
+L.control.zoom({ position: 'topright' }).addTo(map);
 
 let scope = "rest";
 const markers = {};
