@@ -36,7 +36,7 @@
 <div id="sidebar">
   <div id="sidebar-header">
     <h1>🇯🇵 日本200名城</h1>
-    <div class="updated">数据核对：2026年11月4日 · 每月1日自动更新 · 详细信息逐步完善中</div>
+    <div class="updated">数据核对：2026年11月4日 · 地图底图已切换为 Google，右上角可切换「地图 / 卫星 / 混合」</div>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
     <div class="filters">
       <select id="region"><option value="">全部区域</option><option value="北海道">北海道</option><option value="東北">东北</option><option value="関東">关东</option><option value="甲信越">甲信越</option><option value="北陸">北陆</option><option value="東海">东海</option><option value="近畿">近畿</option><option value="中国">中国</option><option value="四国">四国</option><option value="九州">九州</option><option value="沖縄">冲绳</option></select>
@@ -90,17 +90,17 @@ const castles = [
 {no:35,name:"金泽城",loc:"石川县金泽市",region:"北陸",type:"100",lat:36.564,lng:136.659,stamps:[{place:"二之丸案内所等",time:"请确认"}],hours:"公园自由",ticket:"部分有料",events:[],official:""},
 {no:36,name:"丸冈城",loc:"福井县坂井市",region:"北陸",type:"100",lat:36.15,lng:136.27,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
 {no:37,name:"一向一葺关连城郭",loc:"福井县胜山市等",region:"北陸",type:"100",lat:35.90,lng:136.50,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
-{no:38,name:"岩村城",loc:"岐阜县惠那市",region:"东海",type:"100",lat:35.44,lng:137.44,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
-{no:39,name:"岐阜城",loc:"岐阜县岐阜市",region:"东海",type:"100",lat:35.43,lng:136.76,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
-{no:40,name:"山中城",loc:"静冈县三岛市",region:"东海",type:"100",lat:35.15,lng:138.99,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
-{no:41,name:"骏府城",loc:"静冈县静冈市",region:"东海",type:"100",lat:34.98,lng:138.38,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
-{no:42,name:"挂川城",loc:"静冈县挂川市",region:"东海",type:"100",lat:34.77,lng:138.01,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
-{no:43,name:"犬山城",loc:"爱知县犬山市",region:"东海",type:"100",lat:35.39,lng:136.94,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"天守有料",events:[],official:""},
-{no:44,name:"名古屋城",loc:"爱知县名古屋市",region:"东海",type:"100",lat:35.185,lng:136.899,stamps:[{place:"天守阁内 / 案内所",time:"请确认"}],hours:"约9:00-16:30",ticket:"天守有料",events:[],official:""},
-{no:45,name:"冈崎城",loc:"爱知县冈崎市",region:"东海",type:"100",lat:34.96,lng:137.16,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
-{no:46,name:"长篠城",loc:"爱知县新城市",region:"东海",type:"100",lat:34.92,lng:137.56,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
-{no:47,name:"伊贺上野城",loc:"三重县伊贺市",region:"东海",type:"100",lat:34.77,lng:136.13,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
-{no:48,name:"松阪城",loc:"三重县松阪市",region:"东海",type:"100",lat:34.72,lng:136.51,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:38,name:"岩村城",loc:"岐阜县惠那市",region:"東海",type:"100",lat:35.44,lng:137.44,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
+{no:39,name:"岐阜城",loc:"岐阜县岐阜市",region:"東海",type:"100",lat:35.43,lng:136.76,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:40,name:"山中城",loc:"静冈县三岛市",region:"東海",type:"100",lat:35.15,lng:138.99,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
+{no:41,name:"骏府城",loc:"静冈县静冈市",region:"東海",type:"100",lat:34.98,lng:138.38,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:42,name:"挂川城",loc:"静冈县挂川市",region:"東海",type:"100",lat:34.77,lng:138.01,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:43,name:"犬山城",loc:"爱知县犬山市",region:"東海",type:"100",lat:35.39,lng:136.94,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"天守有料",events:[],official:""},
+{no:44,name:"名古屋城",loc:"爱知县名古屋市",region:"東海",type:"100",lat:35.185,lng:136.899,stamps:[{place:"天守阁内 / 案内所",time:"请确认"}],hours:"约9:00-16:30",ticket:"天守有料",events:[],official:""},
+{no:45,name:"冈崎城",loc:"爱知县冈崎市",region:"東海",type:"100",lat:34.96,lng:137.16,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:46,name:"长篠城",loc:"爱知县新城市",region:"東海",type:"100",lat:34.92,lng:137.56,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
+{no:47,name:"伊贺上野城",loc:"三重县伊贺市",region:"東海",type:"100",lat:34.77,lng:136.13,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
+{no:48,name:"松阪城",loc:"三重县松阪市",region:"東海",type:"100",lat:34.72,lng:136.51,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
 {no:49,name:"小谷城",loc:"滋贺县长滨市",region:"近畿",type:"100",lat:35.45,lng:136.28,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"免费",events:[],official:""},
 {no:50,name:"彦根城",loc:"滋贺县彦根市",region:"近畿",type:"100",lat:35.276,lng:136.252,stamps:[{place:"天守或管理处",time:"约8:30-17:00"}],hours:"约8:30-17:00",ticket:"成人约800-1000日元",events:[],official:""},
 {no:51,name:"安土城",loc:"滋贺县近江八幡市",region:"近畿",type:"100",lat:35.16,lng:136.14,stamps:[{place:"待核对",time:"请确认"}],hours:"请确认",ticket:"有料",events:[],official:""},
@@ -164,7 +164,40 @@ const castles = [
 ];
 
 const map = L.map('map').setView([36.5, 138], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(map);
+function googleTiles(lyrs) {
+  return L.tileLayer('https://mt{s}.google.com/vt/lyrs=' + lyrs + '&hl=zh-CN&gl=JP&x={x}&y={y}&z={z}', {
+    subdomains: ['0','1','2','3'],
+    maxZoom: 20,
+    attribution: '地图数据 &copy; Google'
+  });
+}
+let gTiles = googleTiles('m').addTo(map);
+const styleCtl = L.control({position:'topright'});
+styleCtl.onAdd = function() {
+  const div = L.DomUtil.create('div');
+  div.style.cssText = 'display:flex;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:13px;';
+  const modes = [['m','地图'],['s','卫星'],['y','混合']];
+  modes.forEach(([k,label], i) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.dataset.k = k;
+    b.style.cssText = 'border:0;background:' + (k==='m'?'#1a73e8':'#fff') + ';color:' + (k==='m'?'#fff':'#202124') + ';padding:8px 12px;cursor:pointer;' + (i?'border-left:1px solid #dadce0':'');
+    b.onclick = function(ev) {
+      L.DomEvent.stop(ev);
+      map.removeLayer(gTiles);
+      gTiles = googleTiles(k).addTo(map);
+      div.querySelectorAll('button').forEach(x => {
+        const on = x.dataset.k === k;
+        x.style.background = on ? '#1a73e8' : '#fff';
+        x.style.color = on ? '#fff' : '#202124';
+      });
+    };
+    div.appendChild(b);
+  });
+  L.DomEvent.disableClickPropagation(div);
+  return div;
+};
+styleCtl.addTo(map);
 
 const markers = {};
 castles.forEach(c => {
