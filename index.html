@@ -49,23 +49,11 @@
 <div id="sidebar">
   <div id="sidebar-header">
     <h1>🇯🇵 日本200名城</h1>
-    <div class="updated">数据核对：2026年11月4日 · 地图底图已切换为 Google，右上角可切换「地图 / 卫星 / 混合」</div>
+    <div class="updated">数据核对：2026年11月4日 · 去过的点「筛选」。地图右上角可看全部、筛选的、未筛选的。</div>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
     <div class="filters">
       <select id="region"><option value="">全部区域</option><option value="北海道">北海道</option><option value="東北">东北</option><option value="関東">关东</option><option value="甲信越">甲信越</option><option value="北陸">北陆</option><option value="東海">东海</option><option value="近畿">近畿</option><option value="中国">中国</option><option value="四国">四国</option><option value="九州">九州</option><option value="沖縄">冲绳</option></select>
       <select id="type"><option value="">全部</option><option value="100">日本100名城</option><option value="続">続100名城</option></select>
-      <div class="set-wrap" id="setWrap">
-        <button type="button" id="settingsBtn">设置</button>
-        <div id="settingsPanel">
-          <div style="font-weight:500;font-size:0.9rem;">显示设置</div>
-          <div class="hint" style="margin:4px 0 6px;">只记在这台设备上，用来把暂时不用看的藏起来。</div>
-          <label><input type="checkbox" id="hideUnchecked"><span>隐藏未核对的城<span class="hint">盖章地点仍是「待核对」的，列表和地图都不显示</span></span></label>
-          <label><input type="checkbox" id="eventsOnly"><span>只看有活动的城<span class="hint">没有近期活动的先藏起来</span></span></label>
-          <label><input type="checkbox" id="hideVisited"><span>隐藏已去过的城<span class="hint">卡片上点「去过」后，可以从行程里拿掉</span></span></label>
-          <label><input type="checkbox" id="compact"><span>卡片里不显示占位信息<span class="hint">「待核对」「请确认」不再占位置</span></span></label>
-          <div class="set-foot"><span id="visitedCount">已去过 0 座</span><button type="button" id="resetPrefs">全部恢复</button></div>
-        </div>
-      </div>
     </div>
   </div>
   <div id="list"></div>
@@ -224,46 +212,71 @@ styleCtl.onAdd = function() {
 };
 styleCtl.addTo(map);
 
+const scopeCtl = L.control({position:"topright"});
+let scope = "rest";
+scopeCtl.onAdd = function() {
+  const div = L.DomUtil.create("div");
+  div.style.cssText = "display:flex;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:13px;margin-top:8px;";
+  [["all","全部"],["picked","筛选的"],["rest","未筛选的"]].forEach(([k,label], i) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.dataset.k = k;
+    b.style.cssText = "border:0;padding:8px 12px;cursor:pointer;" + (i ? "border-left:1px solid #dadce0;" : "");
+    b.onclick = function(ev) {
+      L.DomEvent.stop(ev);
+      scope = k;
+      localStorage.setItem(SCOPE_KEY, scope);
+      paintScope();
+      filter();
+    };
+    div.appendChild(b);
+  });
+  L.DomEvent.disableClickPropagation(div);
+  return div;
+};
+scopeCtl.addTo(map);
+function paintScope(){
+  const root = scopeCtl.getContainer();
+  if(!root) return;
+  root.querySelectorAll("button").forEach(x => {
+    const on = x.dataset.k === scope;
+    x.style.background = on ? "#1a73e8" : "#fff";
+    x.style.color = on ? "#fff" : "#202124";
+  });
+}
+
 const markers = {};
-const PREFS_KEY = "castle-display-v1";
+const PICK_KEY = "castle-picked-v1";
 const VISITED_KEY = "castle-visited-v1";
-const prefs = { hideUnchecked:false, eventsOnly:false, hideVisited:false, compact:false };
-let visited = new Set();
+const SCOPE_KEY = "castle-scope-v1";
+let picked = new Set();
 
 function loadStore(){
   try{
-    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
-    if(p) Object.assign(prefs, p);
-    const v = JSON.parse(localStorage.getItem(VISITED_KEY) || "[]");
-    if(Array.isArray(v)) visited = new Set(v.filter(n => typeof n === "number"));
+    const raw = localStorage.getItem(PICK_KEY) || localStorage.getItem(VISITED_KEY);
+    const v = JSON.parse(raw || "[]");
+    if(Array.isArray(v)) picked = new Set(v.filter(n => typeof n === "number"));
+    const saved = localStorage.getItem(SCOPE_KEY);
+    if(saved === "all" || saved === "picked" || saved === "rest") scope = saved;
   }catch(e){}
-  ["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.checked = !!prefs[id];
-  });
-  paintSettingsBtn();
+  paintScope();
 }
-function saveStore(){
-  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-  localStorage.setItem(VISITED_KEY, JSON.stringify([...visited]));
-  paintSettingsBtn();
-}
-function paintSettingsBtn(){
-  const n = ["hideUnchecked","eventsOnly","hideVisited","compact"].filter(k => prefs[k]).length;
-  const btn = document.getElementById("settingsBtn");
-  btn.classList.toggle("on", n > 0 || document.getElementById("settingsPanel").classList.contains("open"));
-  btn.textContent = n ? "设置 " + n : "设置";
-  document.getElementById("visitedCount").textContent = "已去过 " + visited.size + " 座";
-}
-function stampKnown(c){
-  return (c.stamps||[]).some(s => s.place && s.place.indexOf("待核对") < 0);
+function savePicked(){
+  localStorage.setItem(PICK_KEY, JSON.stringify([...picked]));
 }
 
 function syncMarkers(list){
   Object.keys(markers).forEach(k => { map.removeLayer(markers[k]); delete markers[k]; });
   list.forEach(c => {
     if(!(c.lat && c.lng)) return;
-    const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>No.${c.no} ${c.name}</b><br>${c.loc}`);
+    const hollow = scope === "all" && picked.has(c.no);
+    const icon = L.divIcon({
+      className: "",
+      html: `<span style="display:block;width:14px;height:14px;border-radius:50%;background:${hollow?"#fff":"#1a73e8"};border:2px solid ${hollow?"#1a73e8":"#fff"};box-shadow:0 1px 3px rgba(0,0,0,.35)"></span>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+    const m = L.marker([c.lat, c.lng], {icon, title: c.name}).addTo(map).bindPopup(`<b>No.${c.no} ${c.name}</b><br>${c.loc}`);
     markers[c.no] = m;
     m.on("click", () => selectCastle(c.no));
   });
@@ -276,25 +289,35 @@ function selectCastle(no){
   const c = castles.find(x => x.no === no);
   if(c && markers[no]){map.setView([c.lat, c.lng], 13); markers[no].openPopup();}
 }
-function toggleVisited(no, ev){
+function togglePicked(no, ev){
   if(ev) ev.stopPropagation();
-  if(visited.has(no)) visited.delete(no); else visited.add(no);
-  saveStore();
+  if(picked.has(no)) picked.delete(no); else picked.add(no);
+  savePicked();
+  filter();
+}
+function clearPicked(){
+  picked = new Set();
+  savePicked();
   filter();
 }
 
 function render(list){
   const el = document.getElementById("list");
-  const hidden = castles.length - list.length;
-  document.getElementById("countline").textContent = "显示 " + list.length + " 座" + (hidden ? "，已过滤 " + hidden + " 座" : "") + "。营业/盖章/活动会变动，出发前请确认官方。";
-  if(!list.length){el.innerHTML = '<div style="padding:20px;text-align:center;color:#5f6368;">没有符合条件的城。可以在设置里关掉过滤。</div>'; syncMarkers(list); return;}
+  const clear = picked.size ? ` <button type="button" onclick="clearPicked()" style="border:0;background:none;color:#1a73e8;cursor:pointer;font-size:0.75rem;">清除筛选</button>` : "";
+  document.getElementById("countline").innerHTML = "当前 " + list.length + " 座 · 已筛选 " + picked.size + " 座。" + clear + " 营业/盖章/活动会变动，出发前请确认官方。";
+  if(!list.length){
+    const msg = scope === "picked" && picked.size === 0
+      ? "还没有筛选。在卡片上点「筛选」，比如已经去过的城。"
+      : "没有符合条件的城。可以换到「全部」或「筛选的」看看。";
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:#5f6368;">${msg}</div>`;
+    syncMarkers(list);
+    return;
+  }
   el.innerHTML = list.map(c => {
-    const stamps = (c.stamps||[]).filter(s => !prefs.compact || (s.place && s.place.indexOf("待核对") < 0));
-    const stampsHtml = stamps.map(s => `<div class="stamp-item"><div>📍 ${s.place}</div>${!prefs.compact || (s.time && s.time !== "请确认") ? `<div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div>` : ""}<a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
+    const stampsHtml = (c.stamps||[]).map(s => `<div class="stamp-item"><div>📍 ${s.place}</div><div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div><a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
     const eventsHtml = (c.events||[]).map(e => `<div class="event-item"><div>🎉 ${e.title}</div><div style="color:#5f6368;font-size:0.78rem;">${e.detail||""}</div>${e.link?`<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>`:""}</div>`).join("");
-    const hours = prefs.compact && (!c.hours || c.hours === "请确认") ? "" : `营业：${c.hours||"请确认"}`;
-    const been = visited.has(c.no);
-    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><div class="card-top"><h3 style="${been?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><button type="button" class="been-btn${been?" on":""}" onclick="toggleVisited(${c.no}, event)">${been?"已去过":"去过"}</button></div><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">${hours}${hours && c.ticket ? " · " : ""}${c.ticket?`门票：${c.ticket}`:""}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
+    const on = picked.has(c.no);
+    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><div class="card-top"><h3 style="${on?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><button type="button" class="been-btn${on?" on":""}" onclick="togglePicked(${c.no}, event)">${on?"已筛选":"筛选"}</button></div><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
   }).join("");
   syncMarkers(list);
 }
@@ -307,10 +330,8 @@ function filter(){
     const matchQ = !q || c.name.toLowerCase().includes(q) || String(c.no).includes(q) || c.loc.toLowerCase().includes(q);
     const matchR = !region || c.region === region;
     const matchT = !type || c.type === type;
-    const matchChecked = !prefs.hideUnchecked || stampKnown(c);
-    const matchEvents = !prefs.eventsOnly || (c.events && c.events.length);
-    const matchVisited = !prefs.hideVisited || !visited.has(c.no);
-    return matchQ && matchR && matchT && matchChecked && matchEvents && matchVisited;
+    const matchScope = scope === "all" || (scope === "picked" ? picked.has(c.no) : !picked.has(c.no));
+    return matchQ && matchR && matchT && matchScope;
   });
   render(filtered);
 }
@@ -318,31 +339,6 @@ function filter(){
 document.getElementById("search").addEventListener("input", filter);
 document.getElementById("region").addEventListener("change", filter);
 document.getElementById("type").addEventListener("change", filter);
-["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => {
-  document.getElementById(id).addEventListener("change", (ev) => {
-    prefs[id] = ev.target.checked;
-    saveStore();
-    filter();
-  });
-});
-document.getElementById("settingsBtn").addEventListener("click", (ev) => {
-  ev.stopPropagation();
-  document.getElementById("settingsPanel").classList.toggle("open");
-  paintSettingsBtn();
-});
-document.getElementById("resetPrefs").addEventListener("click", () => {
-  prefs.hideUnchecked = prefs.eventsOnly = prefs.hideVisited = prefs.compact = false;
-  visited = new Set();
-  ["hideUnchecked","eventsOnly","hideVisited","compact"].forEach(id => { document.getElementById(id).checked = false; });
-  saveStore();
-  filter();
-});
-document.addEventListener("click", (ev) => {
-  if(!document.getElementById("setWrap").contains(ev.target)){
-    document.getElementById("settingsPanel").classList.remove("open");
-    paintSettingsBtn();
-  }
-});
 
 loadStore();
 filter();
