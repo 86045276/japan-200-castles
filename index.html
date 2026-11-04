@@ -31,12 +31,22 @@
   .card-top{display:flex;align-items:flex-start;gap:8px;}
   .card-top h3{flex:1;}
   .set-wrap{position:relative;flex:0 0 auto;}
-  #settingsBtn{height:100%;padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:0.85rem;cursor:pointer;}
+  #settingsBtn{height:100%;padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:0.85rem;cursor:pointer;white-space:nowrap;}
   #settingsBtn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
-  #settingsPanel{display:none;position:absolute;top:calc(100% + 8px);right:0;z-index:20;width:280px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:12px;}
-  #settingsPanel.open{display:block;}
-  #settingsPanel label{display:flex;gap:8px;padding:8px 2px;font-size:0.85rem;cursor:pointer;}
-  #settingsPanel .hint{display:block;color:var(--muted);font-size:0.75rem;font-weight:400;}
+  #settings{display:none;flex:1;overflow:auto;padding:12px 16px;}
+  #settings.open{display:block;}
+  #list.off{display:none;}
+  .scope-row,.suggest{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:8px;}
+  .scope-row button{flex:1;border:0;background:#fff;padding:8px 4px;cursor:pointer;font-size:0.85rem;}
+  .scope-row button.on{background:var(--accent);color:#fff;}
+  .field{width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;}
+  .suggest{flex-direction:column;margin-top:8px;}
+  .suggest button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--border);background:#fff;padding:8px 10px;cursor:pointer;font-size:0.85rem;}
+  .suggest button:last-child{border-bottom:0;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .chips button{border:0;background:#e8f0fe;border-radius:16px;padding:4px 10px;cursor:pointer;font-size:0.75rem;}
+  .sec{margin-top:16px;font-size:0.9rem;font-weight:500;}
+  .hint{color:var(--muted);font-size:0.75rem;font-weight:400;margin-top:4px;}
   .set-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);margin-top:4px;padding-top:8px;font-size:0.75rem;color:var(--muted);}
   .set-foot button{border:0;background:none;color:var(--accent);cursor:pointer;font-size:0.75rem;}
   .link-btn{background:#d97706;}
@@ -49,12 +59,29 @@
 <div id="sidebar">
   <div id="sidebar-header">
     <h1>🇯🇵 日本200名城</h1>
-    <div class="updated">数据核对：2026年11月4日 · 去过的点「筛选」。地图右上角可看全部、筛选的、未筛选的。</div>
+    <div class="updated">数据核对：2026年11月4日 · 在「设置」里输入城号或城名筛选，并选择图面显示。</div>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
     <div class="filters">
       <select id="region"><option value="">全部区域</option><option value="北海道">北海道</option><option value="東北">东北</option><option value="関東">关东</option><option value="甲信越">甲信越</option><option value="北陸">北陆</option><option value="東海">东海</option><option value="近畿">近畿</option><option value="中国">中国</option><option value="四国">四国</option><option value="九州">九州</option><option value="沖縄">冲绳</option></select>
       <select id="type"><option value="">全部</option><option value="100">日本100名城</option><option value="続">続100名城</option></select>
+      <button type="button" id="settingsBtn">设置</button>
     </div>
+  </div>
+  <div id="settings">
+    <div class="sec" style="margin-top:0;">图面显示</div>
+    <div class="hint">列表和地图一起变。选「未筛选的」会把已加入的城拿掉。</div>
+    <div class="scope-row" id="scopeBtns">
+      <button type="button" data-k="all">全部</button>
+      <button type="button" data-k="picked">筛选的</button>
+      <button type="button" data-k="rest">未筛选的</button>
+    </div>
+    <div class="sec">加入筛选</div>
+    <div class="hint">输入城号或城名。多个城号用空格或逗号，例如 59, 54。</div>
+    <input class="field" id="pickInput" placeholder="59 或 姫路城">
+    <div id="suggest"></div>
+    <div class="sec" style="display:flex;justify-content:space-between;align-items:center;"><span id="pickedTitle">已筛选 0</span><button type="button" id="clearPicked" style="border:0;background:none;color:#1a73e8;cursor:pointer;font-size:0.75rem;">清除</button></div>
+    <div class="hint" id="pickedEmpty">还没有。去过的城加到这里，再选「未筛选的」就会从地图上消失。</div>
+    <div class="chips" id="pickedChips"></div>
   </div>
   <div id="list"></div>
   <div class="notice" id="countline">营业/盖章/活动会变动，出发前请确认官方。点击「导航」可打开 Google Maps。</div>
@@ -212,45 +239,22 @@ styleCtl.onAdd = function() {
 };
 styleCtl.addTo(map);
 
-const scopeCtl = L.control({position:"topright"});
 let scope = "rest";
-scopeCtl.onAdd = function() {
-  const div = L.DomUtil.create("div");
-  div.style.cssText = "display:flex;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:13px;margin-top:8px;";
-  [["all","全部"],["picked","筛选的"],["rest","未筛选的"]].forEach(([k,label], i) => {
-    const b = document.createElement("button");
-    b.textContent = label;
-    b.dataset.k = k;
-    b.style.cssText = "border:0;padding:8px 12px;cursor:pointer;" + (i ? "border-left:1px solid #dadce0;" : "");
-    b.onclick = function(ev) {
-      L.DomEvent.stop(ev);
-      scope = k;
-      localStorage.setItem(SCOPE_KEY, scope);
-      paintScope();
-      filter();
-    };
-    div.appendChild(b);
-  });
-  L.DomEvent.disableClickPropagation(div);
-  return div;
-};
-scopeCtl.addTo(map);
-function paintScope(){
-  const root = scopeCtl.getContainer();
-  if(!root) return;
-  root.querySelectorAll("button").forEach(x => {
-    const on = x.dataset.k === scope;
-    x.style.background = on ? "#1a73e8" : "#fff";
-    x.style.color = on ? "#fff" : "#202124";
-  });
-}
-
 const markers = {};
 const PICK_KEY = "castle-picked-v1";
 const VISITED_KEY = "castle-visited-v1";
 const SCOPE_KEY = "castle-scope-v1";
 let picked = new Set();
 
+function suggestionsFor(text){
+  const q = text.trim().toLowerCase();
+  if(!q) return [];
+  const tokens = q.split(/[\s,，、]+/).filter(Boolean);
+  if(tokens.length > 1 && tokens.every(token => /^\d+$/.test(token))){
+    return castles.filter(c => tokens.includes(String(c.no)));
+  }
+  return castles.filter(c => c.name.toLowerCase().includes(q) || String(c.no).startsWith(q)).slice(0, 8);
+}
 function loadStore(){
   try{
     const raw = localStorage.getItem(PICK_KEY) || localStorage.getItem(VISITED_KEY);
@@ -259,10 +263,32 @@ function loadStore(){
     const saved = localStorage.getItem(SCOPE_KEY);
     if(saved === "all" || saved === "picked" || saved === "rest") scope = saved;
   }catch(e){}
-  paintScope();
+  paintSettings();
 }
-function savePicked(){
-  localStorage.setItem(PICK_KEY, JSON.stringify([...picked]));
+function savePicked(){ localStorage.setItem(PICK_KEY, JSON.stringify([...picked])); }
+function paintSettings(){
+  document.querySelectorAll("#scopeBtns button").forEach(btn => {
+    const on = btn.dataset.k === scope;
+    btn.classList.toggle("on", on);
+  });
+  const open = document.getElementById("settings").classList.contains("open");
+  const settingsBtn = document.getElementById("settingsBtn");
+  settingsBtn.textContent = open ? "完成" : (picked.size ? "设置 " + picked.size : "设置");
+  settingsBtn.classList.toggle("on", open || picked.size > 0);
+  const chosen = castles.filter(c => picked.has(c.no)).sort((a,b) => a.no - b.no);
+  document.getElementById("pickedTitle").textContent = "已筛选 " + chosen.length;
+  document.getElementById("pickedEmpty").style.display = chosen.length ? "none" : "block";
+  document.getElementById("clearPicked").style.visibility = chosen.length ? "visible" : "hidden";
+  document.getElementById("pickedChips").innerHTML = chosen.map(c => `<button type="button" onclick="removePicked(${c.no})">No.${c.no} ${c.name} ×</button>`).join("");
+  const q = document.getElementById("pickInput").value;
+  const box = document.getElementById("suggest");
+  const matches = suggestionsFor(q);
+  if(!q.trim()){ box.innerHTML = ""; return; }
+  if(!matches.length){ box.innerHTML = '<div class="hint">没有匹配的城</div>'; return; }
+  box.innerHTML = `<div class="suggest">${matches.map(c => {
+    const on = picked.has(c.no);
+    return `<button type="button" onclick="${on ? `removePicked(${c.no})` : `addPicked([${c.no}])`}">No.${c.no} ${c.name}<span style="color:${on ? "#5f6368" : "#1a73e8"}">${on ? "移除" : "加入"}</span></button>`;
+  }).join("")}</div>`;
 }
 
 function syncMarkers(list){
@@ -289,9 +315,14 @@ function selectCastle(no){
   const c = castles.find(x => x.no === no);
   if(c && markers[no]){map.setView([c.lat, c.lng], 13); markers[no].openPopup();}
 }
-function togglePicked(no, ev){
-  if(ev) ev.stopPropagation();
-  if(picked.has(no)) picked.delete(no); else picked.add(no);
+function addPicked(nos){
+  nos.forEach(no => picked.add(no));
+  savePicked();
+  document.getElementById("pickInput").value = "";
+  filter();
+}
+function removePicked(no){
+  picked.delete(no);
   savePicked();
   filter();
 }
@@ -303,12 +334,12 @@ function clearPicked(){
 
 function render(list){
   const el = document.getElementById("list");
-  const clear = picked.size ? ` <button type="button" onclick="clearPicked()" style="border:0;background:none;color:#1a73e8;cursor:pointer;font-size:0.75rem;">清除筛选</button>` : "";
-  document.getElementById("countline").innerHTML = "当前 " + list.length + " 座 · 已筛选 " + picked.size + " 座。" + clear + " 营业/盖章/活动会变动，出发前请确认官方。";
+  document.getElementById("countline").textContent = "当前 " + list.length + " 座 · 已筛选 " + picked.size + " 座。营业/盖章/活动会变动，出发前请确认官方。";
+  paintSettings();
   if(!list.length){
     const msg = scope === "picked" && picked.size === 0
-      ? "还没有筛选。在卡片上点「筛选」，比如已经去过的城。"
-      : "没有符合条件的城。可以换到「全部」或「筛选的」看看。";
+      ? "还没有筛选。打开「设置」，输入城号或城名。"
+      : "没有符合条件的城。到设置里可以改成「全部」或「筛选的」。";
     el.innerHTML = `<div style="padding:20px;text-align:center;color:#5f6368;">${msg}</div>`;
     syncMarkers(list);
     return;
@@ -317,7 +348,7 @@ function render(list){
     const stampsHtml = (c.stamps||[]).map(s => `<div class="stamp-item"><div>📍 ${s.place}</div><div style="color:#5f6368;font-size:0.78rem;">⏰ ${s.time||"请确认"}</div><a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a></div>`).join("");
     const eventsHtml = (c.events||[]).map(e => `<div class="event-item"><div>🎉 ${e.title}</div><div style="color:#5f6368;font-size:0.78rem;">${e.detail||""}</div>${e.link?`<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>`:""}</div>`).join("");
     const on = picked.has(c.no);
-    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><div class="card-top"><h3 style="${on?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><button type="button" class="been-btn${on?" on":""}" onclick="togglePicked(${c.no}, event)">${on?"已筛选":"筛选"}</button></div><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
+    return `<div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})"><h3 style="${on?"color:#5f6368":""}">No.${c.no} ${c.name}</h3><div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}${on?" · 已筛选":""}</div>${stampsHtml}${eventsHtml}<div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">营业：${c.hours||"请确认"} · 门票：${c.ticket||"遗迹多为免费"}${c.official?`<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>`:""}</div></div>`;
   }).join("");
   syncMarkers(list);
 }
@@ -339,6 +370,32 @@ function filter(){
 document.getElementById("search").addEventListener("input", filter);
 document.getElementById("region").addEventListener("change", filter);
 document.getElementById("type").addEventListener("change", filter);
+document.getElementById("settingsBtn").addEventListener("click", () => {
+  const panel = document.getElementById("settings");
+  const list = document.getElementById("list");
+  panel.classList.toggle("open");
+  list.classList.toggle("off");
+  paintSettings();
+  if(panel.classList.contains("open")) document.getElementById("pickInput").focus();
+});
+document.getElementById("scopeBtns").addEventListener("click", (ev) => {
+  const btn = ev.target.closest("button");
+  if(!btn) return;
+  scope = btn.dataset.k;
+  localStorage.setItem(SCOPE_KEY, scope);
+  filter();
+});
+document.getElementById("pickInput").addEventListener("input", paintSettings);
+document.getElementById("pickInput").addEventListener("keydown", (ev) => {
+  if(ev.key !== "Enter") return;
+  ev.preventDefault();
+  const matches = suggestionsFor(ev.target.value);
+  if(!matches.length) return;
+  const tokens = ev.target.value.trim().split(/[\s,，、]+/).filter(Boolean);
+  const nos = tokens.length > 1 && tokens.every(token => /^\d+$/.test(token)) ? matches.map(c => c.no) : [matches[0].no];
+  addPicked(nos);
+});
+document.getElementById("clearPicked").addEventListener("click", clearPicked);
 
 loadStore();
 filter();
