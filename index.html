@@ -43,8 +43,9 @@
   #sidebar-header h1 {
     font-size: 1.25rem;
     font-weight: 500;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
   }
+  .updated { font-size: 0.75rem; color: var(--muted); margin-bottom: 10px; }
   #search {
     width: 100%;
     padding: 10px 12px 10px 36px;
@@ -89,18 +90,20 @@
     margin-bottom: 4px;
   }
   .meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 6px; }
-  .stamp-item {
+  .stamp-item, .event-item {
     background: #e8f0fe;
     border-radius: 6px;
     padding: 8px 10px;
     margin: 4px 0;
     font-size: 0.85rem;
   }
-  .stamp-item .place { font-weight: 500; }
-  .stamp-item .time { color: var(--muted); font-size: 0.78rem; }
-  .nav-btn {
+  .event-item { background: #fff4e6; }
+  .stamp-item .place, .event-item .title { font-weight: 500; }
+  .stamp-item .time, .event-item .detail { color: var(--muted); font-size: 0.78rem; }
+  .nav-btn, .link-btn {
     display: inline-block;
     margin-top: 4px;
+    margin-right: 6px;
     padding: 4px 10px;
     background: var(--accent);
     color: white;
@@ -110,7 +113,8 @@
     cursor: pointer;
     text-decoration: none;
   }
-  .nav-btn:hover { background: var(--accent-dark); }
+  .link-btn { background: #d97706; }
+  .nav-btn:hover, .link-btn:hover { opacity: 0.9; }
   #map {
     flex: 1;
     height: 100%;
@@ -133,6 +137,7 @@
 <div id="sidebar">
   <div id="sidebar-header">
     <h1>🇯🇵 日本200名城</h1>
+    <div class="updated">数据核对时间：2026年11月4日 · 每月1日自动更新</div>
     <input type="text" id="search" placeholder="搜索城名、编号、地点...">
     <div class="filters">
       <select id="region">
@@ -157,36 +162,54 @@
     </div>
   </div>
   <div id="list"></div>
-  <div class="notice">营业时间与盖章地点会变动，出发前请确认官方。点击「导航」可直接打开 Google Maps。</div>
+  <div class="notice">营业时间、盖章地点、活动会变动，出发前请确认官方。点击「导航」或活动链接可直接跳转。</div>
 </div>
 <div id="map"></div>
 
 <script>
+const LAST_UPDATED = "2026年11月4日";
+
 const castles = [
   {no:2, name:"五棱郭", loc:"北海道函馆市", region:"北海道", type:"100", lat:41.796, lng:140.757,
    stamps:[{place:"箱馆奉行所附属「板库」入口附近", time:"10:00-17:00"}],
-   hours:"约9:00-17:00（季节变动）", ticket:"奉行所有料", gojoin:"有", event:"樱花季热闹", note:"星形城郭"},
+   hours:"约9:00-17:00（季节变动）", ticket:"奉行所有料", gojoin:"有",
+   events:[{title:"樱花季", detail:"4-5月热闹", link:"https://www.hakodate.travel/"}],
+   official:"https://www.goryokaku-tower.co.jp/", note:"星形城郭"},
   {no:4, name:"弘前城", loc:"青森县弘前市", region:"東北", type:"100", lat:40.607, lng:140.464,
    stamps:[{place:"弘前城情报馆", time:"9:00-17:00（樱花季可能延长）"}],
-   hours:"天守约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"樱花季最盛", note:"现存天守"},
+   hours:"天守约9:00-17:00", ticket:"天守有料", gojoin:"有",
+   events:[{title:"樱花季", detail:"4月下旬-5月上旬最盛", link:"https://www.hirosaki-kanko.or.jp/"}],
+   official:"https://www.hirosakipark.jp/", note:"现存天守"},
   {no:29, name:"松本城", loc:"长野县松本市", region:"甲信越", type:"100", lat:36.239, lng:137.969,
    stamps:[{place:"松本城管理事务所", time:"8:30-17:00"}, {place:"松本市观光信息中心", time:"请确认"}],
-   hours:"约8:30-17:00", ticket:"成人约700-1000日元", gojoin:"有", event:"常有季节活动", note:"国宝现存天守"},
+   hours:"约8:30-17:00", ticket:"成人约700-1000日元", gojoin:"有",
+   events:[{title:"季节活动", detail:"常有夜景/特别展", link:"https://www.matsumoto-castle.jp/"}],
+   official:"https://www.matsumoto-castle.jp/", note:"国宝现存天守"},
   {no:54, name:"大阪城", loc:"大阪府大阪市", region:"近畿", type:"100", lat:34.687, lng:135.526,
    stamps:[{place:"天守阁1楼案内柜台附近", time:"9:00-17:00（最终入馆提前）"}],
-   hours:"天守约9:00-17:00/18:00", ticket:"成人约1200日元", gojoin:"有", event:"常有限定活动", note:"公园免费"},
+   hours:"天守约9:00-17:00/18:00", ticket:"成人约1200日元", gojoin:"有",
+   events:[{title:"秋祭等", detail:"常有限定御城印", link:"https://www.osakacastle.net/"}],
+   official:"https://www.osakacastle.net/", note:"公园免费"},
   {no:59, name:"姫路城", loc:"兵库县姫路市", region:"近畿", type:"100", lat:34.839, lng:134.694,
    stamps:[{place:"管理事务所入口（入城口横）", time:"9:00-16:00（夏季可延长）", closed:"12/29-30"}],
-   hours:"9:00-17:00（最终入城16:00）", ticket:"成人约1000-2500日元", gojoin:"有", event:"特别展览等", note:"世界遗产・国宝"},
+   hours:"9:00-17:00（最终入城16:00）", ticket:"成人约1000-2500日元", gojoin:"有",
+   events:[{title:"特别展览/夜景", detail:"请查官网", link:"https://www.city.himeji.lg.jp/castle/"}],
+   official:"https://www.city.himeji.lg.jp/castle/", note:"世界遗产・国宝"},
   {no:64, name:"松江城", loc:"岛根县松江市", region:"中国", type:"100", lat:35.475, lng:133.050,
    stamps:[{place:"天守或相关设施", time:"约8:30-17:00"}],
-   hours:"天守约8:30-17:00", ticket:"成人约1200日元", gojoin:"有", event:"夜景活动", note:"国宝现存天守"},
+   hours:"天守约8:30-17:00", ticket:"成人约1200日元", gojoin:"有",
+   events:[{title:"夜景活动", detail:"季节性", link:"https://www.matsue-castle.jp/"}],
+   official:"https://www.matsue-castle.jp/", note:"国宝现存天守"},
   {no:73, name:"广岛城", loc:"广岛县广岛市", region:"中国", type:"100", lat:34.403, lng:132.459,
    stamps:[{place:"相关案内所 / 天守区域", time:"约9:00-17:00"}],
-   hours:"约9:00-17:00", ticket:"天守有料", gojoin:"有", event:"宵めぐり灯光活动", note:"鲤城"},
+   hours:"约9:00-17:00", ticket:"天守有料", gojoin:"有",
+   events:[{title:"宵めぐり2026", detail:"2026/12/18-2027/1/11 灯光+投影", link:"https://www.rijo-castle.jp/"}],
+   official:"https://www.rijo-castle.jp/", note:"鲤城"},
   {no:92, name:"熊本城", loc:"熊本县熊本市", region:"九州", type:"100", lat:32.806, lng:130.706,
    stamps:[{place:"相关案内所", time:"确认最新"}],
-   hours:"确认最新", ticket:"天守有料", gojoin:"有", event:"复原相关", note:"地震后复原中"}
+   hours:"确认最新", ticket:"天守有料", gojoin:"有",
+   events:[{title:"复原相关", detail:"注意开放状况", link:"https://castle.kumamoto-guide.jp/"}],
+   official:"https://castle.kumamoto-guide.jp/", note:"地震后复原中"}
 ];
 
 const map = L.map('map').setView([36.5, 138], 5);
@@ -232,13 +255,22 @@ function render(list) {
         <a class="nav-btn" href="https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}" target="_blank">导航</a>
       </div>
     `).join("");
+    const eventsHtml = (c.events || []).map(e => `
+      <div class="event-item">
+        <div class="title">🎉 ${e.title}</div>
+        <div class="detail">${e.detail || ""}</div>
+        ${e.link ? `<a class="link-btn" href="${e.link}" target="_blank">查看活动</a>` : ""}
+      </div>
+    `).join("");
     return `
       <div class="card" data-no="${c.no}" onclick="selectCastle(${c.no})">
         <h3>No.${c.no} ${c.name}</h3>
         <div class="meta">${c.loc} · ${c.type==='100'?'日本100名城':'続100名城'}</div>
         ${stampsHtml}
+        ${eventsHtml}
         <div style="font-size:0.8rem;margin-top:6px;color:#5f6368;">
           营业：${c.hours || "请确认"} · 门票：${c.ticket || "遗迹多为免费"}
+          ${c.official ? `<br><a href="${c.official}" target="_blank" style="color:#1a73e8;">官方网站</a>` : ""}
         </div>
       </div>
     `;
